@@ -255,14 +255,33 @@ async function findOpenIssues(repo) {
   }
 }
 
-// Enhanced comment posting (simulation for safety)
+// Enhanced comment posting with real contributions
 async function postComment(issue, repo, comment) {
-  // For safety, we'll simulate posting comments instead of actually posting
-  console.log(`\n💬 SIMULATING comment on issue: ${issue.title}`);
-  console.log(`📝 Comment: ${comment}`);
-  console.log(`🔗 Would post to: ${issue.html_url}`);
+  const enableRealContributions = process.env.ENABLE_REAL_CONTRIBUTIONS === 'true';
   
-  // Track the simulated contribution
+  if (!enableRealContributions) {
+    console.log(`\n💬 SIMULATING comment on issue: ${issue.title}`);
+    console.log(`📝 Comment: ${comment}`);
+    console.log(`🔗 Would post to: ${issue.html_url}`);
+  } else {
+    console.log(`\n💬 POSTING REAL comment on issue: ${issue.title}`);
+    console.log(`📝 Comment: ${comment}`);
+    console.log(`🔗 Posting to: ${issue.html_url}`);
+    
+    try {
+      const url = `https://api.github.com/repos/${repo.owner.login}/${repo.name}/issues/${issue.number}/comments`;
+      const response = await axios.post(url, {
+        body: comment
+      });
+      
+      console.log(`✅ Real comment posted successfully! ID: ${response.data.id}`);
+    } catch (error) {
+      console.error(`❌ Failed to post real comment:`, error.response?.data?.message || error.message);
+      return false;
+    }
+  }
+  
+  // Track the contribution
   const commentData = {
     id: Date.now(),
     body: comment,
@@ -273,7 +292,7 @@ async function postComment(issue, repo, comment) {
   tracker.trackComment(repo, commentData);
   ethics.recordAction('comment', repo.full_name);
   
-  return true; // Simulate success
+  return true;
 }
 
 // Main bot execution

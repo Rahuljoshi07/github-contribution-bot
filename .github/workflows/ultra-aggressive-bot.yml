@@ -1,0 +1,117 @@
+name: 🚀 Ultra-Aggressive GitHub Bot 24/7
+
+on:
+  schedule:
+    # Run every 15 minutes for maximum activity
+    - cron: '*/15 * * * *'
+  
+  workflow_dispatch:
+    inputs:
+      target_contributions:
+        description: 'Target contributions per run'
+        required: false
+        default: '5'
+      max_repos:
+        description: 'Maximum repositories to analyze'
+        required: false
+        default: '30'
+      enable_real_contributions:
+        description: 'Enable real contributions (not simulation)'
+        required: false
+        default: 'true'
+        type: boolean
+
+jobs:
+  ultra-aggressive-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    
+    steps:
+    - name: 🔧 Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: 🟢 Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+        
+    - name: 📦 Install dependencies
+      run: npm ci
+      
+    - name: 🔥 Run Ultra-Aggressive Bot
+      run: node run-production.js
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_USERNAME: ${{ secrets.GITHUB_USERNAME }}
+        YOUR_NAME: ${{ secrets.YOUR_NAME }}
+        YOUR_EMAIL: ${{ secrets.YOUR_EMAIL }}
+        SKILLS: ${{ secrets.SKILLS }}
+        HUGGINGFACE_API_KEY: ${{ secrets.HUGGINGFACE_API_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        MAX_REPOS_PER_SEARCH: ${{ github.event.inputs.max_repos || '30' }}
+        MAX_ISSUES_PER_REPO: 10
+        CONTRIBUTION_DELAY_MS: 3000
+        TARGET_CONTRIBUTIONS: ${{ github.event.inputs.target_contributions || '5' }}
+        ENABLE_REAL_CONTRIBUTIONS: ${{ github.event.inputs.enable_real_contributions || 'true' }}
+        
+    - name: 📊 Upload logs and data
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ultra-aggressive-logs-${{ github.run_number }}
+        path: |
+          contributions.json
+          contributions.csv
+          activity_log.json
+          *.log
+        retention-days: 7
+        
+    - name: 📈 Generate execution summary
+      if: always()
+      run: |
+        echo "## 🚀 Ultra-Aggressive Bot Report" >> $GITHUB_STEP_SUMMARY
+        echo "- **Run Number:** ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Execution Time:** $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "- **Target Contributions:** ${{ github.event.inputs.target_contributions || '5' }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Max Repos:** ${{ github.event.inputs.max_repos || '30' }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Real Contributions:** ${{ github.event.inputs.enable_real_contributions || 'true' }}" >> $GITHUB_STEP_SUMMARY
+        
+        if [ -f "contributions.json" ]; then
+          echo "- **Contributions File:** ✅ Generated" >> $GITHUB_STEP_SUMMARY
+          echo "- **File Size:** $(wc -c < contributions.json) bytes" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ -f "contributions.csv" ]; then
+          echo "- **CSV Export:** ✅ Generated" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total Records:** $(wc -l < contributions.csv)" >> $GITHUB_STEP_SUMMARY
+        fi
+
+  continuous-monitoring:
+    needs: ultra-aggressive-bot
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: 📊 Monitor bot performance
+      run: |
+        echo "🤖 Monitoring ultra-aggressive bot performance..."
+        echo "Status: ${{ needs.ultra-aggressive-bot.result }}"
+        
+        case "${{ needs.ultra-aggressive-bot.result }}" in
+          success)
+            echo "✅ Bot executed successfully!"
+            ;;
+          failure)
+            echo "❌ Bot execution failed!"
+            ;;
+          cancelled)
+            echo "⏹️ Bot execution was cancelled!"
+            ;;
+        esac
+        
+    - name: 🔄 Prepare for next run
+      run: |
+        echo "⏰ Next execution scheduled in 15 minutes..."
+        echo "🎯 Target: 10 issues + 10 PRs daily"
+        echo "🚀 Operating in 24/7 mode"

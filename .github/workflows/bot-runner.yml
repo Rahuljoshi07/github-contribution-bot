@@ -1,20 +1,25 @@
-name: 🤖 GitHub Contribution Bot Runner
+name: 🤖 GitHub Contribution Bot 24/7 Aggressive
 
 on:
   schedule:
-    # Run every 6 hours
-    - cron: '0 */6 * * *'
+    # Run every 30 minutes for maximum activity (24/7)
+    - cron: '*/30 * * * *'
   
   workflow_dispatch:
     inputs:
       max_repos:
         description: 'Maximum repositories to analyze'
         required: false
-        default: '10'
+        default: '20'
       max_issues:
         description: 'Maximum issues per repository'
         required: false
-        default: '5'
+        default: '10'
+      aggressive_mode:
+        description: 'Enable aggressive contribution mode'
+        required: false
+        default: 'true'
+        type: boolean
       dry_run:
         description: 'Run in dry-run mode (no actual contributions)'
         required: false
