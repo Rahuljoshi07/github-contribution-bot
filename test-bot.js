@@ -11,13 +11,13 @@ const { getTargetedRepositories } = require('./repositoryFilter');
 const { createAutomatedPR } = require('./pullRequestHandler');
 require('dotenv').config();
 
-// Load configuration
+// Load configuration with fallbacks
 const config = {
-  githubToken: process.env.GITHUB_TOKEN,
-  username: process.env.GITHUB_USERNAME,
-  name: process.env.YOUR_NAME,
-  email: process.env.YOUR_EMAIL,
-  skills: process.env.SKILLS.split(',').map(skill => skill.trim()),
+  githubToken: process.env.GITHUB_TOKEN || process.env.BOT_GITHUB_TOKEN,
+  username: process.env.GITHUB_USERNAME || process.env.BOT_USERNAME,
+  name: process.env.YOUR_NAME || 'Test Bot',
+  email: process.env.YOUR_EMAIL || 'test@example.com',
+  skills: (process.env.SKILLS || 'javascript,python,react,nodejs').split(',').map(skill => skill.trim()),
   maxRepos: parseInt(process.env.MAX_REPOS_PER_SEARCH) || 10,
   maxIssues: parseInt(process.env.MAX_ISSUES_PER_REPO) || 5
 };
