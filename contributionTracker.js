@@ -34,10 +34,27 @@ class ContributionTracker {
     };
   }
 
+  // Push contributions to GitHub profile repo
+  pushContributionsToProfileRepo() {
+    console.log('🚀 Pushing contributions to the GitHub profile repository...');
+    try {
+      const exec = require('child_process').exec;
+      exec(`git config user.email "${this.username}@users.noreply.github.com"`);
+      exec(`git config user.name "GitHub Contribution Bot"`);
+      exec('git add contributions.json');
+      exec('git commit -m "Auto-update contributions"');
+      exec('git push origin main');
+      console.log('✅ Contributions pushed successfully!');
+    } catch (error) {
+      console.error('❌ Failed to push contributions:', error.message);
+    }
+  }
+
   // Save contributions to file
   saveContributions() {
     try {
       fs.writeFileSync(this.dataFile, JSON.stringify(this.contributions, null, 2));
+      this.pushContributionsToProfileRepo();
     } catch (error) {
       console.error('Error saving contributions:', error);
     }
