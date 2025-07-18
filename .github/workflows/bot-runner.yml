@@ -1,0 +1,116 @@
+name: 🤖 GitHub Contribution Bot Runner
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  
+  workflow_dispatch:
+    inputs:
+      max_repos:
+        description: 'Maximum repositories to analyze'
+        required: false
+        default: '10'
+      max_issues:
+        description: 'Maximum issues per repository'
+        required: false
+        default: '5'
+      dry_run:
+        description: 'Run in dry-run mode (no actual contributions)'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [16.x, 18.x]
+    
+    steps:
+    - name: 🔧 Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: 🟢 Set up Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        
+    - name: 📦 Install dependencies
+      run: npm ci
+      
+    - name: 🧪 Run comprehensive tests
+      run: node test-bot.js
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_USERNAME: ${{ secrets.GITHUB_USERNAME }}
+        YOUR_NAME: ${{ secrets.YOUR_NAME }}
+        YOUR_EMAIL: ${{ secrets.YOUR_EMAIL }}
+        SKILLS: ${{ secrets.SKILLS }}
+        HUGGINGFACE_API_KEY: ${{ secrets.HUGGINGFACE_API_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        MAX_REPOS_PER_SEARCH: ${{ github.event.inputs.max_repos || '10' }}
+        MAX_ISSUES_PER_REPO: ${{ github.event.inputs.max_issues || '5' }}
+        
+    - name: 🤖 Run GitHub Contribution Bot
+      if: github.event.inputs.dry_run != 'true'
+      run: node index.js
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_USERNAME: ${{ secrets.GITHUB_USERNAME }}
+        YOUR_NAME: ${{ secrets.YOUR_NAME }}
+        YOUR_EMAIL: ${{ secrets.YOUR_EMAIL }}
+        SKILLS: ${{ secrets.SKILLS }}
+        HUGGINGFACE_API_KEY: ${{ secrets.HUGGINGFACE_API_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        MAX_REPOS_PER_SEARCH: ${{ github.event.inputs.max_repos || '10' }}
+        MAX_ISSUES_PER_REPO: ${{ github.event.inputs.max_issues || '5' }}
+        CONTRIBUTION_DELAY_MS: 5000
+        
+    - name: 📊 Upload contribution logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: contribution-logs-${{ matrix.node-version }}
+        path: |
+          contributions.json
+          activity_log.json
+          *.log
+        retention-days: 30
+        
+    - name: 📈 Generate contribution report
+      if: always()
+      run: |
+        echo "## 🤖 Bot Execution Report" >> $GITHUB_STEP_SUMMARY
+        echo "- **Node.js Version:** ${{ matrix.node-version }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Execution Time:** $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "- **Max Repos:** ${{ github.event.inputs.max_repos || '10' }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Max Issues:** ${{ github.event.inputs.max_issues || '5' }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Dry Run:** ${{ github.event.inputs.dry_run || 'false' }}" >> $GITHUB_STEP_SUMMARY
+        
+        if [ -f "contributions.json" ]; then
+          echo "- **Contributions File:** ✅ Generated" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- **Contributions File:** ❌ Not found" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+  notification:
+    needs: run-bot
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: 📢 Send notification
+      if: needs.run-bot.result == 'failure'
+      run: |
+        echo "🚨 GitHub Contribution Bot failed to execute!"
+        echo "Check the logs for more details."
+        
+    - name: ✅ Success notification
+      if: needs.run-bot.result == 'success'
+      run: |
+        echo "🎉 GitHub Contribution Bot executed successfully!"
+        echo "Check the artifacts for contribution logs."

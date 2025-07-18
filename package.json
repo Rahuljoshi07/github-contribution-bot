@@ -1,0 +1,13 @@
+{
+  "name": "github-contribution-bot",
+  "version": "1.0.0",
+  "description": "A bot that automates contributions to open source projects on GitHub.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "axios": "^1.10.0",
+    "dotenv": "^10.0.0"
+  }
+}
