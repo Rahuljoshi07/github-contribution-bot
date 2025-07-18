@@ -50,8 +50,8 @@ jobs:
     - name: 🧪 Run comprehensive tests
       run: node test-bot.js
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GITHUB_USERNAME: ${{ secrets.GITHUB_USERNAME }}
+        GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
+        GITHUB_USERNAME: ${{ secrets.BOT_USERNAME }}
         YOUR_NAME: ${{ secrets.YOUR_NAME }}
         YOUR_EMAIL: ${{ secrets.YOUR_EMAIL }}
         SKILLS: ${{ secrets.SKILLS }}
@@ -64,8 +64,8 @@ jobs:
       if: github.event.inputs.dry_run != 'true'
       run: node index.js
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GITHUB_USERNAME: ${{ secrets.GITHUB_USERNAME }}
+        GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
+        GITHUB_USERNAME: ${{ secrets.BOT_USERNAME }}
         YOUR_NAME: ${{ secrets.YOUR_NAME }}
         YOUR_EMAIL: ${{ secrets.YOUR_EMAIL }}
         SKILLS: ${{ secrets.SKILLS }}
