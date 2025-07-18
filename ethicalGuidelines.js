@@ -6,11 +6,11 @@ class EthicalGuidelines {
   constructor(config) {
     this.config = config;
     this.rateLimit = {
-      issuesPerHour: 5,
-      prsPerHour: 3,
-      commentsPerHour: 10,
-      totalPerDay: 50,
-      cooldownPeriod: 300000 // 5 minutes in ms
+      issuesPerHour: 2,
+      prsPerHour: 2,
+      commentsPerHour: 5,
+      totalPerDay: 100,
+      cooldownPeriod: 60000 // 1 minute in ms
     };
     this.activityLog = this.loadActivityLog();
   }
@@ -240,24 +240,36 @@ class EthicalGuidelines {
       }
     }
 
-    // Check relevance to repository
-    if (repo.language) {
+// Improved relevance check with project context
+    const projectSpecificTerms = Array.from(new Set([
+      ...(repo.topics || []),
+      ...Object.keys(repo.languageDetails || {})
+    ]));
+
+    const hasProjectSpecificTerms = projectSpecificTerms.some(term => 
+      content.toLowerCase().includes(term.toLowerCase())
+    );
+
+    const shouldValidateLanguage = ['JavaScript', 'Python', 'Java', 'C++', 'Go'].includes(repo.language);
+    let hasRelevantTerms = false;
+
+    if (shouldValidateLanguage) {
       const languageTerms = {
         'JavaScript': ['js', 'javascript', 'node', 'react', 'vue', 'angular'],
-        'Python': ['python', 'py', 'django', 'flask', 'pandas', 'numpy'],
-        'Java': ['java', 'spring', 'maven', 'gradle', 'jvm'],
-        'C++': ['cpp', 'c++', 'cmake', 'gcc', 'clang'],
-        'Go': ['go', 'golang', 'goroutine', 'gin', 'fiber']
+        'Python': ['python', 'django', 'flask', 'pandas', 'numpy'],
+        'Java': ['java', 'spring', 'jvm'],
+        'C++': ['cpp', 'c++', 'clang', 'gcc'],
+        'Go': ['go', 'golang']
       };
 
-      const relevantTerms = languageTerms[repo.language] || [];
-      const hasRelevantTerms = relevantTerms.some(term => 
+      const relevantTerms = languageTerms[repo.language];
+      hasRelevantTerms = relevantTerms ? relevantTerms.some(term => 
         content.toLowerCase().includes(term.toLowerCase())
-      );
+      ) : false;
+    }
 
-      if (!hasRelevantTerms && relevantTerms.length > 0) {
-        return { valid: false, reason: 'Content not relevant to repository language' };
-      }
+    if (!hasProjectSpecificTerms && !hasRelevantTerms) {
+      return { valid: false, reason: 'Content not relevant to repository context' };
     }
 
     return { valid: true };

@@ -91,10 +91,50 @@ The bot includes GitHub Actions workflows for automated execution:
 
 ### Skills Configuration
 
-Add your skills to the `SKILLS` environment variable:
+The bot supports a comprehensive range of technologies and skills. Add your skills to the `SKILLS` environment variable:
+
 ```env
-SKILLS=javascript,python,react,nodejs,docker,kubernetes,aws,machine-learning
+# Example with comprehensive skills
+SKILLS=docker,kubernetes,jenkins,github-actions,ci-cd,linux,bash,ansible,terraform,python,javascript,typescript,reactjs,nodejs,mysql,aws,machine-learning,oop,dsa
 ```
+
+#### Supported Technology Categories:
+
+**DevOps & Infrastructure:**
+- Docker, Kubernetes, Jenkins, GitHub Actions, CI/CD Pipelines
+- Linux, Bash, Ansible, Terraform, Nginx
+- AWS (EC2, S3, IAM, CloudWatch), Azure, Google Cloud
+- Prometheus, Grafana, ELK Stack, Nagios
+
+**Programming Languages:**
+- JavaScript, TypeScript, Python, C++, C#, C, Java, Go, Rust, PHP, Ruby
+- Shell scripting, YAML, JSON, XML
+
+**Web Technologies:**
+- HTML, CSS, ReactJS, Vue.js, Angular, Node.js
+- Next.js, Express.js, Material UI, Bootstrap, Tailwind CSS
+- REST APIs, GraphQL, WebSockets
+
+**Databases:**
+- MySQL, PostgreSQL, MongoDB, Redis, SQLite
+- Elasticsearch, Cassandra, Oracle
+
+**Mobile Development:**
+- React Native, Flutter, Android (Java/Kotlin), iOS (Swift/Objective-C)
+
+**Testing & Quality:**
+- Jest, Mocha, Cypress, Selenium, JUnit, PyTest
+- TDD, BDD, Unit Testing, Integration Testing
+
+**Data Science & ML:**
+- Machine Learning, TensorFlow, PyTorch, Pandas, NumPy
+- Jupyter, R, MATLAB, Data Analysis
+
+**Cloud & Deployment:**
+- AWS, Azure, Google Cloud, Heroku, Vercel, Netlify
+- Docker, Kubernetes, Serverless, Microservices
+
+**And many more!** Check the `skills-mapping.js` file for the complete list.
 
 ## 🤖 How It Works
 

@@ -70,7 +70,8 @@ function filterRepositories(repos, criteria = {}) {
     maxIssues = 100,
     languages = [],
     maxDaysOld = 365,
-    requiresIssues = true
+    requiresIssues = true,
+    requiredSkills = []
   } = criteria;
   
   return repos.filter(repo => {
@@ -89,6 +90,9 @@ function filterRepositories(repos, criteria = {}) {
     // Check language
     if (languages.length > 0 && !languages.includes(stats.language)) return false;
     
+    // Check required skills
+    if (requiredSkills.length > 0 && !requiredSkills.some(skill => repo.topics?.includes(skill) || stats.language?.toLowerCase().includes(skill))) return false;
+
     // Check if repo has issues enabled
     if (requiresIssues && !stats.hasIssues) return false;
     
