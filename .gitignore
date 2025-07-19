@@ -7,10 +7,24 @@ yarn-error.log*
 
 # Environment variables
 .env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.*.local
+
+# Secure credential files
+.github-bot-credentials*
+*.enc
+*.key
+*.pem
+*.p12
+*.pfx
 
 # Logs
 *.log
 logs/
+secure-logs/
 
 # Runtime data
 pids

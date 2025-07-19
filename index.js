@@ -1,23 +1,58 @@
 const axios = require('axios');
 require('dotenv').config();
+const SecurityManager = require('./security-config');
+const CredentialManager = require('./credential-manager');
 
-// Load configuration from .env file with fallbacks
-const config = {
-  githubToken: process.env.GITHUB_TOKEN || process.env.BOT_GITHUB_TOKEN,
-  username: process.env.GITHUB_USERNAME || process.env.BOT_USERNAME,
-  name: process.env.YOUR_NAME || 'GitHub Bot',
-  email: process.env.YOUR_EMAIL || 'bot@example.com',
-  skills: (process.env.SKILLS || 'javascript,python,react,nodejs').split(',').map(skill => skill.trim()),
-  maxRepos: parseInt(process.env.MAX_REPOS_PER_SEARCH) || 10,
-  maxIssues: parseInt(process.env.MAX_ISSUES_PER_REPO) || 5,
-  contributionDelay: parseInt(process.env.CONTRIBUTION_DELAY_MS) || 5000,
-  aiProvider: {
-    huggingface: process.env.HUGGINGFACE_API_KEY,
-    openai: process.env.OPENAI_API_KEY
+// Initialize security manager
+const security = new SecurityManager();
+const credentialManager = new CredentialManager();
+
+// Secure configuration loading with validation
+async function loadSecureConfig() {
+  try {
+    // Initialize security checks first
+    await security.initializeSecurity();
+    
+    // Load configuration from .env file with fallbacks and validation
+    const config = {
+      githubToken: process.env.GITHUB_TOKEN || process.env.BOT_GITHUB_TOKEN,
+      username: process.env.GITHUB_USERNAME || process.env.BOT_USERNAME,
+      name: process.env.YOUR_NAME || 'GitHub Bot',
+      email: process.env.YOUR_EMAIL || 'bot@example.com',
+      skills: (process.env.SKILLS || 'javascript,python,react,nodejs').split(',').map(skill => skill.trim()),
+      maxRepos: parseInt(process.env.MAX_REPOS_PER_SEARCH) || 10,
+      maxIssues: parseInt(process.env.MAX_ISSUES_PER_REPO) || 5,
+      contributionDelay: parseInt(process.env.CONTRIBUTION_DELAY_MS) || 5000,
+      aiProvider: {
+        huggingface: process.env.HUGGINGFACE_API_KEY,
+        openai: process.env.OPENAI_API_KEY
+      }
+    };
+
+    // Validate required credentials
+    if (!config.githubToken) {
+      throw new Error('GitHub token is required. Please set GITHUB_TOKEN environment variable.');
+    }
+
+    if (!config.username) {
+      throw new Error('GitHub username is required. Please set GITHUB_USERNAME environment variable.');
+    }
+
+    // Set secure axios defaults
+    axios.defaults.headers.common['Authorization'] = `token ${config.githubToken}`;
+    axios.defaults.headers.common['User-Agent'] = 'GitHub-Contribution-Bot/1.0';
+    axios.defaults.timeout = 30000; // 30 second timeout
+    
+    security.secureLog('info', 'Configuration loaded successfully');
+    return config;
+    
+  } catch (error) {
+    security.secureLog('error', 'Failed to load configuration', { error: error.message });
+    throw error;
   }
-};
+}
 
-axios.defaults.headers.common['Authorization'] = `token ${config.githubToken}`;
+let config; // Will be loaded asynchronously
 
 // Utility function to search for repositories by topics
 async function searchRepositories() {
@@ -77,6 +112,9 @@ async function codeImprovementByLanguage(codeSnippet, language) {
 // Main runner
 (async function runBot() {
   try {
+    // Load secure config asynchronously
+    config = await loadSecureConfig();
+
     const repos = await searchRepositories();
     for (const repo of repos) {
       console.log(`Analyzing repo: ${repo.full_name}`);
@@ -85,7 +123,7 @@ async function codeImprovementByLanguage(codeSnippet, language) {
       for (const issue of issues) {
         console.log(`Analyzing issue: ${issue.title}`);
 
-        const analysis = analyzeIssue(issue);
+        const analysis = await analyzeIssue(issue);
         if (analysis.shouldComment) {
           console.log(`Commenting: ${analysis.comment}`);
           // Post the analysis comment
@@ -97,6 +135,7 @@ async function codeImprovementByLanguage(codeSnippet, language) {
       }
     }
   } catch (error) {
+    security.secureLog('error', 'Bot execution failed', { error: error.message });
     console.error('An error occurred:', error);
   }
 })();
