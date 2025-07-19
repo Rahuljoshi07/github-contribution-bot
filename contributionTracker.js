@@ -45,8 +45,64 @@ class ContributionTracker {
       exec('git commit -m "Auto-update contributions"');
       exec('git push origin main');
       console.log('✅ Contributions pushed successfully!');
+      
+      // Trigger dashboard update
+      this.triggerDashboardUpdate();
     } catch (error) {
       console.error('❌ Failed to push contributions:', error.message);
+    }
+  }
+
+  // Trigger dashboard update via repository dispatch
+  async triggerDashboardUpdate() {
+    try {
+      const https = require('https');
+      const token = process.env.GITHUB_TOKEN;
+      
+      if (!token) {
+        console.log('⚠️ No GitHub token found, skipping dashboard update trigger');
+        return;
+      }
+
+      const data = JSON.stringify({
+        event_type: 'update-dashboard',
+        client_payload: {
+          timestamp: new Date().toISOString(),
+          trigger: 'bot-contribution'
+        }
+      });
+
+      const options = {
+        hostname: 'api.github.com',
+        port: 443,
+        path: `/repos/${this.username}/${this.username}/dispatches`,
+        method: 'POST',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'contribution-bot',
+          'Content-Type': 'application/json',
+          'Content-Length': data.length
+        }
+      };
+
+      const req = https.request(options, (res) => {
+        if (res.statusCode === 204) {
+          console.log('✅ Dashboard update triggered successfully!');
+        } else {
+          console.log(`⚠️ Dashboard update trigger response: ${res.statusCode}`);
+        }
+      });
+
+      req.on('error', (error) => {
+        console.error('❌ Failed to trigger dashboard update:', error.message);
+      });
+
+      req.write(data);
+      req.end();
+      
+    } catch (error) {
+      console.error('❌ Error triggering dashboard update:', error.message);
     }
   }
 
