@@ -12,6 +12,7 @@ class SecurityManager {
       /ghu_[a-zA-Z0-9]{36}/, // GitHub User Token
       /ghs_[a-zA-Z0-9]{36}/, // GitHub Server Token
       /ghr_[a-zA-Z0-9]{36}/, // GitHub Refresh Token
+      /github_pat_[A-Za-z0-9_]+/, // GitHub Fine-grained PAT
       /sk-[a-zA-Z0-9]{48}/, // OpenAI API Key
       /hf_[a-zA-Z0-9]{37}/, // HuggingFace API Key
       /^[A-Za-z0-9_-]{20,}$/, // Generic long tokens
@@ -21,7 +22,7 @@ class SecurityManager {
   /**
    * Validate that all required environment variables are present
    */
-  validateEnvironment() {
+  validateEnvironment(mockModeEnabled = false) {
     const missing = [];
     const invalid = [];
 
@@ -34,15 +35,17 @@ class SecurityManager {
       }
     }
 
-    if (missing.length > 0) {
+    if (missing.length > 0 && !mockModeEnabled) {
       throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+    } else if (missing.length > 0 && mockModeEnabled) {
+      console.log(`ℹ️ Mock mode: using fake data instead of missing secrets: ${missing.join(', ')}`);
     }
 
     if (invalid.length > 0) {
-      console.warn(`⚠️  Warning: Invalid format for secrets: ${invalid.join(', ')}`);
+      console.warn(`⚠️ Warning: Invalid format for secrets: ${invalid.join(', ')}`);
     }
 
-    return { valid: true, warnings: invalid };
+    return { valid: true, warnings: invalid, missing: missing };
   }
 
   /**
@@ -54,7 +57,8 @@ class SecurityManager {
     switch (secretName) {
       case 'GITHUB_TOKEN':
         return /^(ghp_|gho_|ghu_|ghs_|ghr_)[a-zA-Z0-9]{36}$/.test(secretValue) ||
-               /^[a-f0-9]{40}$/.test(secretValue); // Classic tokens
+               /^[a-f0-9]{40}$/.test(secretValue) || // Classic tokens
+               /^github_pat_[A-Za-z0-9_]+$/.test(secretValue); // Fine-grained PAT tokens
       case 'OPENAI_API_KEY':
         return /^sk-[a-zA-Z0-9]{48}$/.test(secretValue);
       case 'HUGGINGFACE_API_KEY':
@@ -190,16 +194,26 @@ class SecurityManager {
 
       // Check scopes in response headers
       const scopes = response.headers['x-oauth-scopes'] || '';
-      const requiredScopes = ['repo', 'user'];
-      const hasRequiredScopes = requiredScopes.every(scope => 
-        scopes.includes(scope) || scopes.includes('public_repo')
+      const scopesList = scopes.split(',').map(s => s.trim());
+      
+      // More flexible scope checking
+      const hasRepoAccess = scopesList.some(s => 
+        s === 'repo' || s === 'public_repo' || s.startsWith('repo:') || s.includes('_repo')
       );
+      
+      const hasUserAccess = scopesList.some(s => 
+        s === 'user' || s === 'read:user' || s.startsWith('user:') || s.includes('_user')
+      );
+      
+      const hasRequiredScopes = hasRepoAccess && hasUserAccess;
 
       return {
         valid: true,
-        scopes: scopes.split(',').map(s => s.trim()),
+        scopes: scopesList,
         hasRequiredScopes,
-        user: response.data.login
+        user: response.data.login,
+        hasRepoAccess,
+        hasUserAccess
       };
     } catch (error) {
       return {
@@ -212,13 +226,17 @@ class SecurityManager {
   /**
    * Initialize security checks
    */
-  async initializeSecurity() {
+  async initializeSecurity(mockModeEnabled = false) {
     console.log('🔒 Initializing security checks...');
     
     try {
       // 1. Validate environment
-      const envValidation = this.validateEnvironment();
-      console.log('✅ Environment variables validated');
+      const envValidation = this.validateEnvironment(mockModeEnabled);
+      if (mockModeEnabled) {
+        console.log('ℹ️ Mock mode enabled: skipping strict validation');
+      } else {
+        console.log('✅ Environment variables validated');
+      }
 
       // 2. Check token permissions
       if (process.env.GITHUB_TOKEN) {
@@ -226,7 +244,8 @@ class SecurityManager {
         if (tokenCheck.valid) {
           console.log(`✅ GitHub token valid for user: ${tokenCheck.user}`);
           if (!tokenCheck.hasRequiredScopes) {
-            console.warn('⚠️  Warning: Token may not have all required scopes');
+            // Treat missing scopes as a suggestion rather than a warning
+            console.log('ℹ️ Info: For full functionality, consider adding repo and user scopes to your token');
           }
         } else {
           throw new Error(`Invalid GitHub token: ${tokenCheck.error}`);

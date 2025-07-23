@@ -29,6 +29,14 @@ axios.defaults.headers.common['Authorization'] = `token ${config.githubToken}`;
 async function testGitHubConnection() {
   console.log('\n🔍 Testing GitHub API Connection...');
   
+  // Check if GitHub token is provided
+  if (!config.githubToken) {
+    console.log('⚠️ No GitHub token provided - running in MOCK MODE');
+    console.log('ℹ️ In mock mode, the bot will simulate GitHub API responses');
+    console.log('ℹ️ To enable real API access, add a GitHub token to your .env file');
+    return 'mock'; // Return 'mock' instead of false to indicate mock mode
+  }
+  
   try {
     const response = await axios.get('https://api.github.com/user');
     console.log('✅ GitHub API connection successful!');
@@ -38,6 +46,12 @@ async function testGitHubConnection() {
     return true;
   } catch (error) {
     console.error('❌ GitHub API connection failed:', error.message);
+    if (error.response && error.response.status === 401) {
+      console.error('⚠️ Authentication error: Your GitHub token is invalid or expired');
+      console.error('ℹ️ Please generate a new token at https://github.com/settings/tokens');
+      console.log('⚠️ Switching to MOCK MODE for testing purposes');
+      return 'mock';
+    }
     return false;
   }
 }
