@@ -215,12 +215,23 @@
       "type": "pullRequest",
       "additions": 10,
       "deletions": 5
+    },
+    {
+      "id": 67890,
+      "title": "Test PR - Bot Testing",
+      "repository": "test/repository",
+      "url": "https://github.com/test/repo/pull/1",
+      "createdAt": "2025-07-23T09:45:58.505Z",
+      "status": "open",
+      "type": "pullRequest",
+      "additions": 10,
+      "deletions": 5
     }
   ],
   "comments": [],
   "stats": {
     "totalIssues": 9,
-    "totalPRs": 8,
+    "totalPRs": 9,
     "totalComments": 0,
     "acceptedPRs": 0,
     "closedIssues": 0,
