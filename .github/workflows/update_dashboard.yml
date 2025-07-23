@@ -1,0 +1,129 @@
+name: Update Contribution Dashboard
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # Runs once daily at 02:00 UTC
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  update-dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get Contribution Stats
+        id: stats
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const username = 'Rahuljoshi07';
+            const repo = process.env.GITHUB_REPOSITORY;
+
+            // Fetch issues, PRs, comments in the last 24 hours
+            const since = new Date(Date.now() - 24*60*60*1000).toISOString();
+
+            const issues = await github.rest.search.issuesAndPullRequests({
+              q: `author:${username} type:issue created:>${since}`
+            });
+            const prs = await github.rest.search.issuesAndPullRequests({
+              q: `author:${username} type:pr created:>${since}`
+            });
+            const comments = await github.rest.search.issuesAndPullRequests({
+              q: `commenter:${username} updated:>${since}`
+            });
+
+            // Fetch total contributions
+            const user = await github.rest.users.getByUsername({ username });
+            const repos = await github.rest.repos.listForUser({ username, per_page: 100 });
+            const activeRepos = repos.data.filter(r => r.pushed_at && ((new Date() - new Date(r.pushed_at)) < 30*24*60*60*1000) );
+            const totalContributions = user.data.public_repos + user.data.public_gists;
+
+            // Calculate streak (simplified, always 1 for today)
+            const streak = 1;
+
+            // Prepare stats
+            return {
+              issues: issues.data.total_count,
+              prs: prs.data.total_count,
+              comments: comments.data.total_count,
+              successRate: prs.data.total_count === 0 ? 0 : 100,
+              activeRepos: activeRepos.length,
+              totalContributions,
+              streak,
+              lastActivity: "Today",
+              status: "Active",
+              lastUpdated: new Date().toISOString().replace('T',' ').substring(0,19) + " UTC"
+            };
+
+      - name: Update README dashboard section
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = 'README.md';
+
+            // Read file
+            let content = fs.readFileSync(path, 'utf8');
+
+            // Build new dashboard HTML
+            const s = ${{ steps.stats.outputs.result }};
+            const dashboard = `
+<div align="center">
+  <h2>🤖 Contribution Dashboard</h2>
+</div>
+
+<!-- START_BOT_DASHBOARD -->
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <h3>📈 Daily Contributions</h3>
+        <img src="https://img.shields.io/badge/Issues-${s.issues}-brightgreen?style=for-the-badge&logo=github" alt="Issues Created"/>
+        <img src="https://img.shields.io/badge/PRs-${s.prs}-blue?style=for-the-badge&logo=git" alt="Pull Requests"/>
+        <img src="https://img.shields.io/badge/Comments-${s.comments}-orange?style=for-the-badge&logo=comment" alt="Comments"/>
+      </td>
+      <td align="center">
+        <h3>🎯 Success Rate</h3>
+        <img src="https://img.shields.io/badge/Success_Rate-${s.successRate}%25-red?style=for-the-badge" alt="Success Rate"/>
+        <img src="https://img.shields.io/badge/Active_Repos-${s.activeRepos}-purple?style=for-the-badge" alt="Active Repositories"/>
+      </td>
+    </tr>
+    <tr>
+      <td align="center">
+        <h3>📊 Total Stats</h3>
+        <img src="https://img.shields.io/badge/Total_Contributions-${s.totalContributions}-gold?style=for-the-badge" alt="Total Contributions"/>
+        <img src="https://img.shields.io/badge/Last_Activity-${s.lastActivity}-green?style=for-the-badge" alt="Last Activity"/>
+      </td>
+      <td align="center">
+        <h3>🔥 Current Streak</h3>
+        <img src="https://img.shields.io/badge/Contribution_Streak-${s.streak}%20Days-fire?style=for-the-badge" alt="Contribution Streak"/>
+        <img src="https://img.shields.io/badge/Status-${s.status}-yellow?style=for-the-badge" alt="Bot Status"/>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<div align="center">
+  <h4>🕐 Last Updated: ${s.lastUpdated}</h4>
+  <a href="https://github.com/Rahuljoshi07/github-contribution-bot" target="_blank">
+    <img src="https://img.shields.io/badge/View_Bot_Repository-181717?style=for-the-badge&logo=github" alt="Bot Repository"/>
+  </a>
+</div>
+<!-- END_BOT_DASHBOARD -->
+`;
+
+            // Replace dashboard section
+            const regex = /<!-- START_BOT_DASHBOARD -->([\s\S]*?)<!-- END_BOT_DASHBOARD -->/;
+            content = content.replace(regex, dashboard);
+
+            // Write back to file
+            fs.writeFileSync(path, content);
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "Update Contribution Dashboard [bot]"
+          git push
