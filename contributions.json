@@ -97,6 +97,20 @@
         }
       ],
       "type": "issue"
+    },
+    {
+      "id": 12345,
+      "title": "Test Issue - Bot Testing",
+      "repository": "test/repository",
+      "url": "https://github.com/test/repo/issues/1",
+      "createdAt": "2025-07-23T09:41:14.572Z",
+      "status": "open",
+      "labels": [
+        {
+          "name": "bug"
+        }
+      ],
+      "type": "issue"
     }
   ],
   "pullRequests": [
@@ -180,7 +194,7 @@
   ],
   "comments": [],
   "stats": {
-    "totalIssues": 7,
+    "totalIssues": 8,
     "totalPRs": 7,
     "totalComments": 0,
     "acceptedPRs": 0,
