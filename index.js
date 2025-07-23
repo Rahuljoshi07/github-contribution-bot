@@ -19,8 +19,19 @@ if (!githubToken) {
   console.log('ℹ️ To enable real API access, add a GitHub token to your .env file');
   mockMode = true;
 } else {
-  console.log('✅ GitHub token found - running in REAL MODE');
-  axios.defaults.headers.common['Authorization'] = `token ${githubToken}`;
+  // Check if token is valid format before proceeding
+  const validTokenFormat = /^(ghp_|gho_|ghu_|ghs_|ghr_)[a-zA-Z0-9]{36}$/.test(githubToken) ||
+                          /^[a-f0-9]{40}$/.test(githubToken) || 
+                          /^github_pat_[A-Za-z0-9_]+$/.test(githubToken);
+  
+  if (!validTokenFormat) {
+    console.log('⚠️ Invalid GitHub token format - running in MOCK MODE');
+    console.log('ℹ️ Please check your token format in the .env file');
+    mockMode = true;
+  } else {
+    console.log('✅ GitHub token found - running in REAL MODE');
+    axios.defaults.headers.common['Authorization'] = `token ${githubToken}`;
+  }
 }
 
 // Secure configuration loading with validation
@@ -294,18 +305,23 @@ async function codeImprovementByLanguage(codeSnippet, language) {
   try {
     // Load secure config asynchronously
     config = await loadSecureConfig();
+    console.log('Config loaded successfully, searching repositories...');
 
     const repos = await searchRepositories();
+    console.log(`Found ${repos.length} repositories to analyze:`, repos.map(r => r.full_name));
     for (const repo of repos) {
-      console.log(`Analyzing repo: ${repo.full_name}`);
+      console.log(`\n📦 Analyzing Repository: ${repo.name}`);
+      console.log(`👤 Repository Owner: ${repo.owner.login}`);
+      console.log(`🔗 Repository URL: ${repo.html_url}`);
       
       const issues = await findOpenIssues(repo);
       for (const issue of issues) {
-        console.log(`Analyzing issue: ${issue.title}`);
+        console.log(`\n🔍 Analyzing issue: ${issue.title}`);
+        console.log(`📌 Issue URL: ${issue.html_url}`);
 
         const analysis = await analyzeIssue(issue);
         if (analysis.shouldComment) {
-          console.log(`Commenting: ${analysis.comment}`);
+          console.log(`💬 Commenting: ${analysis.comment}`);
           // Post the analysis comment
           // await postComment(issue, analysis.comment);
         }

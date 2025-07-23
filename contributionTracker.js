@@ -308,7 +308,11 @@ class ContributionTracker {
     console.log('');
     console.log('🏆 TOP REPOSITORIES:');
     report.topRepositories.forEach((repo, index) => {
+      // Extract username and repo name from full repository name (format: username/repo)
+      const [username, repoName] = repo.repository.split('/');
       console.log(`   ${index + 1}. ${repo.repository} (${repo.contributions} contributions)`);
+      console.log(`      👤 Owner: ${username}`);
+      console.log(`      📦 Repository: ${repoName}`);
     });
     console.log('');
     console.log('⏱️ RECENT ACTIVITY:');
