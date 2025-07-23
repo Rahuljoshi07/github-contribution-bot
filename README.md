@@ -14,16 +14,18 @@ Software developer passionate about creating innovative solutions and contributi
 ![Top Languages](https://github-readme-stats.vercel.app/api/top-langs/?username=Rahuljoshi07&layout=compact&theme=radical)
 
 ### 📊 Contribution Summary
-- **Total Contributions**: 14
-- **Issues Created**: 7
-- **Pull Requests**: 7
+- **Total Contributions**: 16
+- **Issues Created**: 8
+- **Pull Requests**: 8
 - **Comments**: 0
 - **Success Rate**: 0%
 
 ### 🏆 Top Repositories
-- **test/repository** (14 contributions)
+- **test/repository** (16 contributions)
 
 ### 📈 Recent Activity
+- **pullRequest**: [Test PR - Bot Testing](https://github.com/test/repo/pull/1)
+- **issue**: [Test Issue - Bot Testing](https://github.com/test/repo/issues/1)
 - **pullRequest**: [Test PR - Bot Testing](https://github.com/test/repo/pull/1)
 - **issue**: [Test Issue - Bot Testing](https://github.com/test/repo/issues/1)
 - **pullRequest**: [Test PR - Bot Testing](https://github.com/test/repo/pull/1)
