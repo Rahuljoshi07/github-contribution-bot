@@ -2,8 +2,18 @@ name: GitHub Contribution Bot
 
 on:
   schedule:
-    - cron: '0 * * * *' # Every hour
+    - cron: '0 */3 * * *' # Every 3 hours to avoid rate limits
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run in dry-run mode (no actual contributions)'
+        required: false
+        default: 'false'
+        type: boolean
+      max_repos:
+        description: 'Maximum repositories to analyze'
+        required: false
+        default: '5'
 
 jobs:
   run-bot:
