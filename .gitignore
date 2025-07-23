@@ -69,11 +69,9 @@ jspm_packages/
 # dotenv environment variables file
 .env
 
-# Bot generated files
-contributions.json
+# Bot generated files - removed contributions.json to allow tracking
 activity_log.json
 contributions.csv
-*.log
 
 # OS generated files
 .DS_Store

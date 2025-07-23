@@ -35,21 +35,70 @@ class ContributionTracker {
   }
 
   // Push contributions to GitHub profile repo
-  pushContributionsToProfileRepo() {
+  async pushContributionsToProfileRepo() {
     console.log('🚀 Pushing contributions to the GitHub profile repository...');
     try {
-      const exec = require('child_process').exec;
-      exec(`git config user.email "${this.username}@users.noreply.github.com"`);
-      exec(`git config user.name "GitHub Contribution Bot"`);
-      exec('git add contributions.json');
-      exec('git commit -m "Auto-update contributions"');
-      exec('git push origin main');
-      console.log('✅ Contributions pushed successfully!');
+      const execSync = require('child_process').execSync;
       
-      // Trigger dashboard update
-      this.triggerDashboardUpdate();
+      // Configure git if not already configured
+      try {
+        execSync(`git config user.email "Rahuljoshi07@users.noreply.github.com"`, { stdio: 'ignore' });
+        execSync(`git config user.name "GitHub Contribution Bot"`, { stdio: 'ignore' });
+      } catch (configError) {
+        console.log('⚠️ Git config already set or failed to set');
+      }
+      
+      // Force add contributions.json even if in .gitignore
+      execSync('git add -f contributions.json', { stdio: 'pipe' });
+      
+      // Check if there are changes to commit
+      try {
+        execSync('git diff --cached --quiet', { stdio: 'ignore' });
+        console.log('ℹ️ No changes to commit - contributions.json is up to date');
+      } catch (diffError) {
+        // There are changes, so commit them
+        execSync('git commit -m "🤖 Auto-update contributions data"', { stdio: 'pipe' });
+        console.log('✅ Contributions committed successfully!');
+        
+        // Only push if we have a valid token and not in CI
+        if (process.env.GITHUB_TOKEN && !process.env.CI) {
+          execSync('git push origin main', { stdio: 'pipe' });
+          console.log('✅ Contributions pushed to GitHub!');
+        } else {
+          console.log('ℹ️ Skipping push (no token or in CI environment)');
+        }
+      }
+
+      // Simulate Dashboard Update by updating readme 
+      this.updateProfileReadme();
     } catch (error) {
-      console.error('❌ Failed to push contributions:', error.message);
+      console.log('⚠️ Git operations completed with warnings:', error.message);
+      // Don't fail the entire process for git issues
+    }
+  }
+
+  // Update profile README with contribution details
+  updateProfileReadme() {
+    console.log('📝 Updating profile README.md with latest contributions');
+    const readmeTemplate = path.join(__dirname, 'profile-readme-template.md');
+    const readmeFile = path.join(__dirname, 'README.md');
+    try {
+      if (fs.existsSync(readmeTemplate)) {
+        let readmeContent = fs.readFileSync(readmeTemplate, 'utf8');
+        const report = this.generateReport();
+        // Replace placeholders with actual data
+        readmeContent = readmeContent.replace('{totalContributions}', report.summary.totalContributions)
+          .replace('{totalIssues}', report.summary.totalIssues)
+          .replace('{totalPRs}', report.summary.totalPRs)
+          .replace('{totalComments}', report.summary.totalComments)
+          .replace('{successRate}', report.summary.successRate.replace('%', ''))
+          .replace('{topRepositories}', report.topRepositories.map(r => `- **${r.repository}** (${r.contributions} contributions)`).join('\n'))
+          .replace('{recentActivity}', report.recentActivity.contributions.map(c => `- **${c.type}**: [${c.title || c.issueTitle || 'Contribution'}](${c.url})`).join('\n'));
+        fs.writeFileSync(readmeFile, readmeContent);
+        console.log('✅ Profile README.md updated successfully!');
+      }
+    } catch (error) {
+      console.error('❌ Failed to update profile README.md:', error.message);
     }
   }
 

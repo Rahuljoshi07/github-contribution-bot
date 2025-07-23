@@ -6,6 +6,9 @@ This guide will help you set up your GitHub Contribution Bot to run automaticall
 
 - GitHub account
 - GitHub Personal Access Token with appropriate scopes (repo, user)
+  - Classic tokens should be 40 characters
+  - Fine-grained tokens should start with github_pat_
+  - Token must have 'repo' and 'user' scopes for full functionality
 - Repository forked or cloned to your GitHub account
 
 ## Setting Up GitHub Actions

@@ -49,8 +49,12 @@ async function testGitHubConnection() {
     if (error.response && error.response.status === 401) {
       console.error('⚠️ Authentication error: Your GitHub token is invalid or expired');
       console.error('ℹ️ Please generate a new token at https://github.com/settings/tokens');
+      console.error('🔑 Remember to add repo and user scopes to your token');
       console.log('⚠️ Switching to MOCK MODE for testing purposes');
       return 'mock';
+    } else if (error.code === 'ENOTFOUND') {
+      console.error('🌐 Network error: Could not connect to GitHub API');
+      console.error('🔍 Check your internet connection and try again');
     }
     return false;
   }

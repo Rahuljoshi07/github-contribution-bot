@@ -30,7 +30,7 @@ class CredentialManager {
       const key = this.deriveKey(masterPassword, salt);
       
       // Create cipher
-      const cipher = crypto.createCipher(this.algorithm, key);
+      const cipher = crypto.createCipheriv(this.algorithm, key, iv);
       cipher.setAAD(Buffer.from('github-bot-credentials'));
       
       // Encrypt credentials
@@ -95,7 +95,7 @@ class CredentialManager {
       const key = this.deriveKey(masterPassword, salt);
       
       // Create decipher
-      const decipher = crypto.createDecipher(this.algorithm, key);
+      const decipher = crypto.createDecipheriv(this.algorithm, key, iv);
       decipher.setAAD(Buffer.from('github-bot-credentials'));
       decipher.setAuthTag(authTag);
       

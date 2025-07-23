@@ -32,6 +32,10 @@ class SecurityManager {
         missing.push(secret);
       } else if (!this.validateSecretFormat(secret, value)) {
         invalid.push(secret);
+        // Add invalid secrets to missing as well if we're in mock mode
+        if (mockModeEnabled) {
+          missing.push(secret);
+        }
       }
     }
 
@@ -120,7 +124,7 @@ class SecurityManager {
     const salt = crypto.randomBytes(16);
     const key = crypto.scryptSync(password, salt, 32);
     const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipher(algorithm, key);
+    const cipher = crypto.createCipheriv(algorithm, key, iv);
 
     let encrypted = cipher.update(JSON.stringify(config), 'utf8', 'hex');
     encrypted += cipher.final('hex');
@@ -141,7 +145,7 @@ class SecurityManager {
     const algorithm = 'aes-256-gcm';
     const salt = Buffer.from(encryptedData.salt, 'hex');
     const key = crypto.scryptSync(password, salt, 32);
-    const decipher = crypto.createDecipher(algorithm, key);
+    const decipher = crypto.createDecipheriv(algorithm, key, Buffer.from(encryptedData.iv, 'hex'));
     
     decipher.setAuthTag(Buffer.from(encryptedData.authTag, 'hex'));
     
