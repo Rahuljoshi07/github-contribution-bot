@@ -435,6 +435,15 @@ async function runProductionBot() {
     tracker.exportToCSV();
     console.log('\n💾 Contribution data exported to contributions.csv');
     
+    // Trigger dashboard update in profile repository
+    console.log('\n🚀 Triggering dashboard update...');
+    try {
+      const { triggerDashboardUpdate } = require('./trigger-dashboard-update');
+      await triggerDashboardUpdate();
+    } catch (error) {
+      console.log('⚠️ Dashboard trigger failed (non-critical):', error.message);
+    }
+    
     console.log('\n🎯 Bot execution completed successfully!');
     
   } catch (error) {
